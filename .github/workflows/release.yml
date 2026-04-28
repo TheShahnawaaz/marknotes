@@ -38,6 +38,18 @@ jobs:
       - name: Install frontend dependencies
         run: npm install
 
+      - name: Bump version from tag
+        shell: bash
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          # Update package.json
+          node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('package.json')); p.version='${VERSION}'; fs.writeFileSync('package.json', JSON.stringify(p, null, 2)+'\n');"
+          # Update tauri.conf.json
+          node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json')); p.version='${VERSION}'; fs.writeFileSync('src-tauri/tauri.conf.json', JSON.stringify(p, null, 2)+'\n');"
+          # Update Cargo.toml
+          sed -i.bak "s/^version = \".*\"/version = \"${VERSION}\"/" src-tauri/Cargo.toml && rm -f src-tauri/Cargo.toml.bak
+
       - name: Extract release notes from CHANGELOG
         id: changelog
         shell: bash
