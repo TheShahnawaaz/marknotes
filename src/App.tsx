@@ -10,6 +10,7 @@ import { Titlebar } from "@/components/titlebar/Titlebar";
 import { Sidebar } from "@/components/sidebar/Sidebar";
 import { Editor } from "@/components/editor/Editor";
 import { Preview } from "@/components/preview/Preview";
+import { UpdateChecker } from "@/components/UpdateChecker";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -256,6 +257,7 @@ export default function App() {
           </div>
         </div>
         <Toaster richColors position="bottom-right" />
+        <UpdateChecker />
 
         {/* Context menu */}
         <DropdownMenu open={contextMenuOpen} onOpenChange={setContextMenuOpen}>

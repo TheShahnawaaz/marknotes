@@ -38,5 +38,13 @@
       "icons/icon.ico",
       "icons/icon.png"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDg5QzVFRUZEM0U3RkJDQzEKUldUQnZIOCsvZTdGaVNON2JIMmIyNXFEYWV1VU9HT2pNRVhyOS9mNUNZZ3c3ZC9rdFdORWdDc28K",
+      "endpoints": [
+        "https://github.com/TheShahnawaaz/marknotes/releases/latest/download/latest.json"
+      ]
+    }
   }
 }

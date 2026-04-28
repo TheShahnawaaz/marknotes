@@ -90,6 +90,8 @@ pub fn run() {
                 .with_state_flags(StateFlags::SIZE | StateFlags::POSITION)
                 .build(),
         )
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .invoke_handler(tauri::generate_handler![
             ensure_notes_dir,
             list_notes,

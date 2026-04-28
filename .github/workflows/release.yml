@@ -35,12 +35,6 @@ jobs:
         with:
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
-      - name: Install dependencies (Ubuntu only)
-        if: matrix.platform == 'ubuntu-22.04'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-
       - name: Install frontend dependencies
         run: npm install
 
@@ -48,6 +42,8 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'MarkNotes ${{ github.ref_name }}'
@@ -55,3 +51,65 @@ jobs:
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
+
+  publish:
+    needs: release
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate latest.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          VERSION="${TAG#v}"
+          DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          # Fetch release assets info
+          RELEASE=$(gh release view "$TAG" --json assets,body --repo "$REPO")
+          NOTES=$(echo "$RELEASE" | jq -r '.body // ""')
+
+          # Helper to get signature from .sig file in release assets
+          get_sig() {
+            local sig_file="$1"
+            gh release download "$TAG" --repo "$REPO" --pattern "$sig_file" --dir /tmp 2>/dev/null && cat "/tmp/$sig_file" || echo ""
+          }
+
+          AARCH64_DMG="MarkNotes_${VERSION}_aarch64.dmg"
+          X64_DMG="MarkNotes_${VERSION}_x64.dmg"
+          X64_MSI="MarkNotes_${VERSION}_x64-setup.msi"
+
+          AARCH64_SIG=$(get_sig "${AARCH64_DMG}.sig")
+          X64_DMG_SIG=$(get_sig "${X64_DMG}.sig")
+          X64_MSI_SIG=$(get_sig "${X64_MSI}.sig")
+
+          BASE_URL="https://github.com/${REPO}/releases/download/${TAG}"
+
+          cat > latest.json << EOF
+          {
+            "version": "${VERSION}",
+            "notes": $(echo "$NOTES" | jq -Rs .),
+            "pub_date": "${DATE}",
+            "platforms": {
+              "darwin-aarch64": {
+                "signature": "${AARCH64_SIG}",
+                "url": "${BASE_URL}/${AARCH64_DMG}"
+              },
+              "darwin-x86_64": {
+                "signature": "${X64_DMG_SIG}",
+                "url": "${BASE_URL}/${X64_DMG}"
+              },
+              "windows-x86_64": {
+                "signature": "${X64_MSI_SIG}",
+                "url": "${BASE_URL}/${X64_MSI}"
+              }
+            }
+          }
+          EOF
+
+          gh release upload "$TAG" latest.json --repo "$REPO" --clobber

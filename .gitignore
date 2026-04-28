@@ -13,6 +13,11 @@ src-tauri/gen/
 .env.local
 .env.*.local
 
+# Signing keys (never commit these)
+*.key
+*.pem
+*.p12
+
 # OS files
 .DS_Store
 Thumbs.db
