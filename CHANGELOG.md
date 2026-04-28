@@ -2,6 +2,21 @@
 
 All notable changes to MarkNotes will be documented here.
 
+## [1.0.3] - 2026-04-29
+
+### Fixed
+- Context menu now appears at cursor position instead of top-left corner
+
+### Added
+- Theme toggle in titlebar (cycles System → Light → Dark)
+- Font size controls in titlebar (A- / A+), sizes 12–20px, persisted across sessions
+- Onboarding welcome note on first launch
+- Keyboard shortcut `Cmd+W` / `Ctrl+W` to deselect active note
+- Keyboard shortcut `Cmd+/` / `Ctrl+/` to open shortcuts panel
+- Keyboard shortcuts panel accessible from titlebar
+- Platform-aware shortcut keys (⌘ on Mac, Ctrl on Windows)
+- Better empty state with emoji and helpful hints
+
 ## [1.0.2] - 2026-04-29
 
 ### Added
