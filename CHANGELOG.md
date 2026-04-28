@@ -2,6 +2,12 @@
 
 All notable changes to MarkNotes will be documented here.
 
+## [1.0.4] - 2026-04-29
+
+### Fixed
+- Auto-updater now correctly downloads then prompts "Restart now" instead of disappearing
+- Separated download and install steps to prevent process being killed before relaunch
+
 ## [1.0.3] - 2026-04-29
 
 ### Fixed
