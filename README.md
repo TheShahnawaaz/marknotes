@@ -21,7 +21,7 @@ A fast, native markdown notes app built with Tauri 2. Clean interface, live prev
 
 ## Demo
 
-https://github.com/user-attachments/assets/8c5e7a9f-3b4d-4f2e-9c8e-2d1f5e6a7b8c
+https://github.com/user-attachments/assets/1263d357-0c05-40aa-af0f-ed37f8090b58
 
 *Live editing, auto-save, search, and theme switching in action*
 
