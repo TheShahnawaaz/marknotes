@@ -2,7 +2,11 @@
 
 All notable changes to MarkNotes will be documented here.
 
-## [1.0.2] - Unreleased
+## [1.0.2] - 2026-04-29
+
+### Added
+- Secure auto-update via GitHub Releases (Ed25519 signed)
+- Update notification with progress bar on startup
 
 ## [1.0.1] - 2026-04-28
 
