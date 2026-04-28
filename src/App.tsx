@@ -11,13 +11,7 @@ import { Sidebar } from "@/components/sidebar/Sidebar";
 import { Editor } from "@/components/editor/Editor";
 import { Preview } from "@/components/preview/Preview";
 import { UpdateChecker } from "@/components/UpdateChecker";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { ShortcutsModal } from "@/components/ShortcutsModal";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +24,47 @@ import { useNotesStore } from "@/store/notes";
 import { tauriCommands } from "@/lib/tauri";
 import path from "@/lib/path";
 
+const WELCOME_NOTE_NAME = "Welcome to MarkNotes.md";
+const WELCOME_NOTE_CONTENT = `# Welcome to MarkNotes 👋
+
+A fast, native markdown notes app built with **Tauri 2**.
+
+## Quick Start
+
+| Shortcut | Action |
+|----------|--------|
+| \`Cmd+N\` | New note |
+| \`Cmd+S\` | Force save |
+| \`Cmd+F\` | Focus search |
+| \`Cmd+W\` | Deselect note |
+| \`Cmd+/\` | Show shortcuts |
+
+## Features
+
+- ✍️ **Live Preview** — See your markdown rendered in real-time
+- 💾 **Auto-save** — Never lose your work (saves every 500ms)
+- 🎨 **Syntax Highlighting** — Beautiful code blocks
+- 🔍 **Search** — Filter notes by filename
+- 🌙 **Dark/Light Theme** — Toggle in the titlebar
+
+## Markdown Support
+
+**Bold**, *italic*, \`inline code\`, [links](https://github.com/TheShahnawaaz/marknotes)
+
+\`\`\`javascript
+// Code blocks with syntax highlighting
+function greet(name) {
+  console.log(\`Hello, \${name}!\`);
+}
+\`\`\`
+
+> Right-click any note in the sidebar to rename or delete it.
+
+---
+
+*Delete this note when you're ready to get started!*
+`;
+
 export default function App() {
   const searchRef = useRef<HTMLInputElement>(null);
   const { setFolderPath, loadNotes, activeNoteId, setActiveNote } = useNotesStore();
@@ -37,9 +72,8 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Context menu state
-  const [contextMenuOpen, setContextMenuOpen] = useState(false);
-  const [contextMenuNote, setContextMenuNote] = useState<string | null>(null);
+  // Context menu state — positioned at cursor
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; notePath: string } | null>(null);
 
   // Rename dialog state
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
@@ -47,26 +81,53 @@ export default function App() {
 
   // Delete dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
+  // Shortcuts modal
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   // Sidebar collapse state
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Close context menu on click/scroll anywhere
+  useEffect(() => {
+    const close = () => setContextMenu(null);
+    window.addEventListener("click", close);
+    window.addEventListener("scroll", close, true);
+    return () => {
+      window.removeEventListener("click", close);
+      window.removeEventListener("scroll", close, true);
+    };
+  }, []);
 
   // Init default notes folder on first launch
   useEffect(() => {
     (async () => {
       const saved = localStorage.getItem("marknotes-folder");
-      if (saved) {
-        setFolderPath(saved);
-        await tauriCommands.ensureNotesDir(saved);
-        await loadNotes();
-        return;
+      const isFirstLaunch = !localStorage.getItem("marknotes-launched");
+
+      let folder = saved;
+      if (!folder) {
+        const docDir = await documentDir();
+        folder = path.join(docDir, "MarkNotes");
+        localStorage.setItem("marknotes-folder", folder);
       }
-      const docDir = await documentDir();
-      const defaultFolder = path.join(docDir, "MarkNotes");
-      await tauriCommands.ensureNotesDir(defaultFolder);
-      localStorage.setItem("marknotes-folder", defaultFolder);
-      setFolderPath(defaultFolder);
+
+      await tauriCommands.ensureNotesDir(folder);
+      setFolderPath(folder);
       await loadNotes();
+
+      // Show welcome note on first launch
+      if (isFirstLaunch) {
+        localStorage.setItem("marknotes-launched", "1");
+        const welcomePath = path.join(folder, WELCOME_NOTE_NAME);
+        const exists = await tauriCommands.readNote(welcomePath).then(() => true).catch(() => false);
+        if (!exists) {
+          await tauriCommands.writeNote(welcomePath, WELCOME_NOTE_CONTENT);
+          await useNotesStore.getState().refreshNotes();
+          useNotesStore.getState().setActiveNote(welcomePath);
+        }
+      }
     })();
   }, []);
 
@@ -82,27 +143,17 @@ export default function App() {
       const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
       const mod = isMac ? e.metaKey : e.ctrlKey;
 
-      // Cmd/Ctrl+N — New note
-      if (mod && e.key === "n") {
-        e.preventDefault();
-        handleNewNote();
-      }
-
-      // Cmd/Ctrl+S — Force save (already auto-saves, but good UX)
+      if (mod && e.key === "n") { e.preventDefault(); handleNewNote(); }
       if (mod && e.key === "s") {
         e.preventDefault();
         if (activeNoteId && content) {
-          tauriCommands.writeNote(activeNoteId, content).then(() => {
-            toast.success("Saved");
-          });
+          tauriCommands.writeNote(activeNoteId, content).then(() => toast.success("Saved"));
         }
       }
-
-      // Cmd/Ctrl+F — Focus search
-      if (mod && e.key === "f") {
-        e.preventDefault();
-        searchRef.current?.focus();
-      }
+      if (mod && e.key === "f") { e.preventDefault(); searchRef.current?.focus(); }
+      if (mod && e.key === "w") { e.preventDefault(); setActiveNote(null); }
+      if (mod && e.key === "/") { e.preventDefault(); setShortcutsOpen(true); }
+      if (e.key === "Escape") { setContextMenu(null); }
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -111,16 +162,13 @@ export default function App() {
 
   // Load active note content
   useEffect(() => {
-    if (!activeNoteId) {
-      setContent("");
-      return;
-    }
+    if (!activeNoteId) { setContent(""); return; }
     (async () => {
       setIsLoading(true);
       try {
         const text = await tauriCommands.readNote(activeNoteId);
         setContent(text);
-      } catch (err) {
+      } catch {
         toast.error("Failed to load note");
       } finally {
         setIsLoading(false);
@@ -132,13 +180,12 @@ export default function App() {
   const handleContentChange = (value: string) => {
     setContent(value);
     if (!activeNoteId) return;
-
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(async () => {
       try {
         await tauriCommands.writeNote(activeNoteId, value);
         await useNotesStore.getState().refreshNotes();
-      } catch (err) {
+      } catch {
         toast.error("Failed to save note");
       }
     }, 500);
@@ -156,56 +203,56 @@ export default function App() {
 
   const handleNoteContextMenu = (e: React.MouseEvent, notePath: string) => {
     e.preventDefault();
-    setContextMenuNote(notePath);
-    setContextMenuOpen(true);
+    e.stopPropagation();
+    setContextMenu({ x: e.clientX, y: e.clientY, notePath });
   };
 
   const handleRenameClick = () => {
-    if (!contextMenuNote) return;
-    const currentName = path.basename(contextMenuNote).replace(/\.md$/, "");
+    if (!contextMenu) return;
+    const currentName = path.basename(contextMenu.notePath).replace(/\.md$/, "");
     setRenameValue(currentName);
     setRenameDialogOpen(true);
-    setContextMenuOpen(false);
+    setContextMenu(null);
   };
 
   const handleRenameConfirm = async () => {
-    if (!contextMenuNote || !renameValue.trim()) return;
+    if (!contextMenu?.notePath && !renameValue.trim()) return;
+    const notePath = contextMenu?.notePath ?? deleteTarget!;
     const { folderPath, refreshNotes } = useNotesStore.getState();
     const newName = renameValue.trim().endsWith(".md") ? renameValue.trim() : `${renameValue.trim()}.md`;
     const newPath = path.join(folderPath, newName);
-
     try {
-      await tauriCommands.renameNote(contextMenuNote, newPath);
-      if (activeNoteId === contextMenuNote) setActiveNote(newPath);
+      await tauriCommands.renameNote(notePath, newPath);
+      if (activeNoteId === notePath) setActiveNote(newPath);
       await refreshNotes();
       toast.success("Note renamed");
     } catch (err) {
       toast.error(String(err));
     } finally {
       setRenameDialogOpen(false);
-      setContextMenuNote(null);
     }
   };
 
   const handleDeleteClick = () => {
+    if (!contextMenu) return;
+    setDeleteTarget(contextMenu.notePath);
     setDeleteDialogOpen(true);
-    setContextMenuOpen(false);
+    setContextMenu(null);
   };
 
   const handleDeleteConfirm = async () => {
-    if (!contextMenuNote) return;
+    if (!deleteTarget) return;
     const { refreshNotes } = useNotesStore.getState();
-
     try {
-      await tauriCommands.deleteNote(contextMenuNote);
-      if (activeNoteId === contextMenuNote) setActiveNote(null);
+      await tauriCommands.deleteNote(deleteTarget);
+      if (activeNoteId === deleteTarget) setActiveNote(null);
       await refreshNotes();
       toast.success("Note deleted");
-    } catch (err) {
+    } catch {
       toast.error("Failed to delete note");
     } finally {
       setDeleteDialogOpen(false);
-      setContextMenuNote(null);
+      setDeleteTarget(null);
     }
   };
 
@@ -213,9 +260,11 @@ export default function App() {
     <ThemeProvider>
       <TooltipProvider delayDuration={300}>
         <div className="flex h-screen w-screen flex-col overflow-hidden bg-background text-foreground">
-          <Titlebar onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
+          <Titlebar
+            onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+            onShowShortcuts={() => setShortcutsOpen(true)}
+          />
           <div className="flex flex-1 overflow-hidden">
-            {/* Fixed sidebar */}
             {!sidebarCollapsed && (
               <div className="w-64 shrink-0">
                 <Sidebar
@@ -226,16 +275,18 @@ export default function App() {
               </div>
             )}
 
-            {/* Resizable editor and preview */}
             {!activeNoteId ? (
-              <div className="flex flex-1 items-center justify-center">
-                <p className="text-sm text-muted-foreground">
-                  {folderPath ? "Select a note to start editing" : "Open a folder to get started"}
+              <div className="flex flex-1 flex-col items-center justify-center gap-3">
+                <p className="text-4xl">📝</p>
+                <p className="text-sm font-medium text-foreground">
+                  {folderPath ? "No note selected" : "Open a folder to get started"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {folderPath ? "Select a note from the sidebar or press ⌘N to create one" : "Click the folder icon in the sidebar"}
                 </p>
               </div>
             ) : (
               <PanelGroup direction="horizontal" className="flex-1">
-                {/* Editor panel */}
                 <Panel defaultSize={50} minSize={30}>
                   {isLoading ? (
                     <div className="flex h-full items-center justify-center">
@@ -245,10 +296,7 @@ export default function App() {
                     <Editor content={content} onChange={handleContentChange} />
                   )}
                 </Panel>
-
                 <PanelResizeHandle className="w-px bg-border hover:bg-primary transition-colors" />
-
-                {/* Preview panel */}
                 <Panel defaultSize={50} minSize={30}>
                   <Preview content={content} />
                 </Panel>
@@ -256,22 +304,33 @@ export default function App() {
             )}
           </div>
         </div>
+
         <Toaster richColors position="bottom-right" />
         <UpdateChecker />
+        <ShortcutsModal open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
 
-        {/* Context menu */}
-        <DropdownMenu open={contextMenuOpen} onOpenChange={setContextMenuOpen}>
-          <DropdownMenuTrigger asChild>
-            <div className="hidden" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem onClick={handleRenameClick}>Rename</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleDeleteClick} className="text-destructive">
+        {/* Positioned context menu */}
+        {contextMenu && (
+          <div
+            style={{ position: "fixed", top: contextMenu.y, left: contextMenu.x, zIndex: 9999 }}
+            className="min-w-[140px] overflow-hidden rounded-md border border-border bg-popover py-1 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="w-full px-3 py-1.5 text-left text-sm hover:bg-accent transition-colors"
+              onClick={handleRenameClick}
+            >
+              Rename
+            </button>
+            <div className="my-1 h-px bg-border" />
+            <button
+              className="w-full px-3 py-1.5 text-left text-sm text-destructive hover:bg-accent transition-colors"
+              onClick={handleDeleteClick}
+            >
               Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </button>
+          </div>
+        )}
 
         {/* Rename dialog */}
         <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
@@ -288,9 +347,7 @@ export default function App() {
               autoFocus
             />
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>
-                Cancel
-              </Button>
+              <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>Cancel</Button>
               <Button onClick={handleRenameConfirm}>Rename</Button>
             </div>
           </DialogContent>
@@ -301,17 +358,11 @@ export default function App() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Delete note</DialogTitle>
-              <DialogDescription>
-                Are you sure? This action cannot be undone.
-              </DialogDescription>
+              <DialogDescription>Are you sure? This action cannot be undone.</DialogDescription>
             </DialogHeader>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button variant="destructive" onClick={handleDeleteConfirm}>
-                Delete
-              </Button>
+              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+              <Button variant="destructive" onClick={handleDeleteConfirm}>Delete</Button>
             </div>
           </DialogContent>
         </Dialog>
