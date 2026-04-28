@@ -27,7 +27,10 @@ A fast, native markdown notes app built with Tauri 2. Clean interface, live prev
 *Clean, distraction-free interface with live markdown preview*
 
 ### Demo Video
-[Watch the demo](screenshots/demo.mov) — See MarkNotes in action with live editing, auto-save, and search
+
+https://github.com/user-attachments/assets/demo.mov
+
+*Live editing, auto-save, search, and theme switching in action*
 
 ## Installation
 
