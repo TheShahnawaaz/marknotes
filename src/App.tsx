@@ -3,7 +3,6 @@ import { documentDir } from "@tauri-apps/api/path";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { Panel, Group as PanelGroup, Separator as PanelResizeHandle } from "react-resizable-panels";
-import { Menu } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -213,7 +212,7 @@ export default function App() {
     <ThemeProvider>
       <TooltipProvider delayDuration={300}>
         <div className="flex h-screen w-screen flex-col overflow-hidden bg-background text-foreground">
-          <Titlebar onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} sidebarCollapsed={sidebarCollapsed} />
+          <Titlebar onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
           <div className="flex flex-1 overflow-hidden">
             {/* Fixed sidebar */}
             {!sidebarCollapsed && (

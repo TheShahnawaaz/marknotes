@@ -8,10 +8,9 @@ const appWindow = getCurrentWindow();
 interface TitlebarProps {
   className?: string;
   onToggleSidebar?: () => void;
-  sidebarCollapsed?: boolean;
 }
 
-export function Titlebar({ className, onToggleSidebar, sidebarCollapsed }: TitlebarProps) {
+export function Titlebar({ className, onToggleSidebar }: TitlebarProps) {
   return (
     <div
       className={cn(
