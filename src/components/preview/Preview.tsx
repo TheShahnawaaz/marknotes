@@ -11,7 +11,7 @@ interface PreviewProps {
 export function Preview({ content }: PreviewProps) {
   return (
     <ScrollArea className="h-full">
-      <div className="prose prose-sm dark:prose-invert max-w-none p-6">
+      <div className="prose prose-sm dark:prose-invert max-w-none p-6" style={{ fontSize: "var(--editor-font-size, 14px)" }}>
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeHighlight]}

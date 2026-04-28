@@ -22,7 +22,7 @@ export function Editor({ content, onChange }: EditorProps) {
   }, [theme]);
 
   return (
-    <div className="h-full overflow-auto">
+    <div className="h-full overflow-auto" style={{ fontSize: "var(--editor-font-size, 14px)" }}>
       <CodeMirror
         value={content}
         onChange={onChange}

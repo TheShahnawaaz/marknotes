@@ -13,7 +13,7 @@ interface TitlebarProps {
 }
 
 export function Titlebar({ className, onToggleSidebar, onShowShortcuts }: TitlebarProps) {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, increaseFontSize, decreaseFontSize } = useTheme();
 
   const cycleTheme = () => {
     if (theme === "system") setTheme("light");
@@ -45,6 +45,24 @@ export function Titlebar({ className, onToggleSidebar, onShowShortcuts }: Titleb
 
       {/* Right side */}
       <div className="flex h-full items-center">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-muted-foreground font-mono text-xs"
+          onClick={decreaseFontSize}
+          title="Decrease font size"
+        >
+          A-
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-muted-foreground font-mono text-sm"
+          onClick={increaseFontSize}
+          title="Increase font size"
+        >
+          A+
+        </Button>
         <Button
           variant="ghost"
           size="icon"
