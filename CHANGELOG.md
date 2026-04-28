@@ -2,6 +2,11 @@
 
 All notable changes to MarkNotes will be documented here.
 
+## [1.0.5] - 2026-04-29
+
+### Improved
+- Minor UI polish
+
 ## [1.0.4] - 2026-04-29
 
 ### Fixed
