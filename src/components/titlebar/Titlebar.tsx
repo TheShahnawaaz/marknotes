@@ -1,7 +1,8 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { Minus, Square, X, Menu, Keyboard } from "lucide-react";
+import { Minus, Square, X, Menu, Keyboard, Sun, Moon, Monitor } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "@/components/theme-provider";
 
 const appWindow = getCurrentWindow();
 
@@ -12,6 +13,16 @@ interface TitlebarProps {
 }
 
 export function Titlebar({ className, onToggleSidebar, onShowShortcuts }: TitlebarProps) {
+  const { theme, setTheme } = useTheme();
+
+  const cycleTheme = () => {
+    if (theme === "system") setTheme("light");
+    else if (theme === "light") setTheme("dark");
+    else setTheme("system");
+  };
+
+  const ThemeIcon = theme === "light" ? Sun : theme === "dark" ? Moon : Monitor;
+
   return (
     <div
       className={cn(
@@ -20,15 +31,10 @@ export function Titlebar({ className, onToggleSidebar, onShowShortcuts }: Titleb
       )}
       data-tauri-drag-region
     >
-      {/* Left side - toggle and app name */}
+      {/* Left side */}
       <div className="flex items-center gap-2 pl-2">
         {onToggleSidebar && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={onToggleSidebar}
-          >
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onToggleSidebar}>
             <Menu className="h-4 w-4" />
           </Button>
         )}
@@ -37,8 +43,17 @@ export function Titlebar({ className, onToggleSidebar, onShowShortcuts }: Titleb
         </span>
       </div>
 
-      {/* Right side - shortcuts + window controls */}
+      {/* Right side */}
       <div className="flex h-full items-center">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 mr-1 text-muted-foreground"
+          onClick={cycleTheme}
+          title={`Theme: ${theme} (click to cycle)`}
+        >
+          <ThemeIcon className="h-3.5 w-3.5" />
+        </Button>
         {onShowShortcuts && (
           <Button
             variant="ghost"

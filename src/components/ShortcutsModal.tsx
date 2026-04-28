@@ -5,12 +5,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+const isMac = navigator.platform.toUpperCase().includes("MAC");
+const mod = isMac ? "⌘" : "Ctrl";
+
 const shortcuts = [
-  { key: "⌘ N", action: "New note" },
-  { key: "⌘ S", action: "Force save" },
-  { key: "⌘ F", action: "Focus search" },
-  { key: "⌘ W", action: "Deselect note" },
-  { key: "⌘ /", action: "Show shortcuts" },
+  { key: `${mod} N`, action: "New note" },
+  { key: `${mod} S`, action: "Force save" },
+  { key: `${mod} F`, action: "Focus search" },
+  { key: `${mod} W`, action: "Deselect note" },
+  { key: `${mod} /`, action: "Show shortcuts" },
   { key: "Esc", action: "Close menu / dialog" },
 ];
 
