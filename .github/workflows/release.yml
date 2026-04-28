@@ -38,6 +38,24 @@ jobs:
       - name: Install frontend dependencies
         run: npm install
 
+      - name: Extract release notes from CHANGELOG
+        id: changelog
+        shell: bash
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          # Extract section between this version and the next
+          NOTES=$(awk "/^## \[${VERSION}\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md)
+          # Trim leading/trailing whitespace
+          NOTES=$(echo "$NOTES" | sed '/^[[:space:]]*$/d')
+          if [ -z "$NOTES" ]; then
+            NOTES="See the assets below to download and install this version."
+          fi
+          # Use delimiter to handle multiline
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Build the app
         uses: tauri-apps/tauri-action@v0
         env:
@@ -47,7 +65,7 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'MarkNotes ${{ github.ref_name }}'
-          releaseBody: 'See the assets to download and install this version.'
+          releaseBody: '${{ steps.changelog.outputs.notes }}'
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
