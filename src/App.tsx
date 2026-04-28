@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { documentDir } from "@tauri-apps/api/path";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
-import { Panel, Group as PanelGroup, Separator as PanelResizeHandle } from "react-resizable-panels";
+import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -233,7 +233,7 @@ export default function App() {
                 </p>
               </div>
             ) : (
-              <PanelGroup orientation="horizontal" className="flex-1">
+              <PanelGroup direction="horizontal" className="flex-1">
                 {/* Editor panel */}
                 <Panel defaultSize={50} minSize={30}>
                   {isLoading ? (
