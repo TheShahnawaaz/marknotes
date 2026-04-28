@@ -4,8 +4,8 @@ All notable changes to MarkNotes will be documented here.
 
 ## [1.0.5] - 2026-04-29
 
-### Improved
-- Minor UI polish
+### Added
+- Status bar showing live word count and character count
 
 ## [1.0.4] - 2026-04-29
 

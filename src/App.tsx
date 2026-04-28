@@ -286,21 +286,32 @@ export default function App() {
                 </p>
               </div>
             ) : (
-              <PanelGroup direction="horizontal" className="flex-1">
-                <Panel defaultSize={50} minSize={30}>
-                  {isLoading ? (
-                    <div className="flex h-full items-center justify-center">
-                      <p className="text-sm text-muted-foreground">Loading...</p>
-                    </div>
-                  ) : (
-                    <Editor content={content} onChange={handleContentChange} />
-                  )}
-                </Panel>
-                <PanelResizeHandle className="w-px bg-border hover:bg-primary transition-colors" />
-                <Panel defaultSize={50} minSize={30}>
-                  <Preview content={content} />
-                </Panel>
-              </PanelGroup>
+              <div className="flex flex-1 flex-col overflow-hidden">
+                <PanelGroup direction="horizontal" className="flex-1">
+                  <Panel defaultSize={50} minSize={30}>
+                    {isLoading ? (
+                      <div className="flex h-full items-center justify-center">
+                        <p className="text-sm text-muted-foreground">Loading...</p>
+                      </div>
+                    ) : (
+                      <Editor content={content} onChange={handleContentChange} />
+                    )}
+                  </Panel>
+                  <PanelResizeHandle className="w-px bg-border hover:bg-primary transition-colors" />
+                  <Panel defaultSize={50} minSize={30}>
+                    <Preview content={content} />
+                  </Panel>
+                </PanelGroup>
+                {/* Status bar */}
+                <div className="flex h-6 shrink-0 items-center justify-end gap-4 border-t border-border bg-background px-4">
+                  <span className="text-xs text-muted-foreground">
+                    {content.trim() ? content.trim().split(/\s+/).length : 0} words
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {content.length} chars
+                  </span>
+                </div>
+              </div>
             )}
           </div>
         </div>
