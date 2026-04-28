@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { documentDir } from "@tauri-apps/api/path";
+import { getVersion } from "@tauri-apps/api/app";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
@@ -70,6 +71,7 @@ export default function App() {
   const { setFolderPath, loadNotes, activeNoteId, setActiveNote } = useNotesStore();
   const [content, setContent] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [appVersion, setAppVersion] = useState("");
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Context menu state — positioned at cursor
@@ -91,6 +93,7 @@ export default function App() {
 
   // Close context menu on click/scroll anywhere
   useEffect(() => {
+    getVersion().then(setAppVersion).catch(() => {});
     const close = () => setContextMenu(null);
     window.addEventListener("click", close);
     window.addEventListener("scroll", close, true);
@@ -303,13 +306,18 @@ export default function App() {
                   </Panel>
                 </PanelGroup>
                 {/* Status bar */}
-                <div className="flex h-6 shrink-0 items-center justify-end gap-4 border-t border-border bg-background px-4">
+                <div className="flex h-6 shrink-0 items-center justify-between border-t border-border bg-background px-4">
                   <span className="text-xs text-muted-foreground">
-                    {content.trim() ? content.trim().split(/\s+/).length : 0} words
+                    {appVersion ? `v${appVersion}` : ""}
                   </span>
-                  <span className="text-xs text-muted-foreground">
-                    {content.length} chars
-                  </span>
+                  <div className="flex gap-4">
+                    <span className="text-xs text-muted-foreground">
+                      {content.trim() ? content.trim().split(/\s+/).length : 0} words
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {content.length} chars
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
