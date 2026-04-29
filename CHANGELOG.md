@@ -2,6 +2,16 @@
 
 All notable changes to MarkNotes will be documented here.
 
+## [1.0.8] - 2026-04-29
+
+### Changed
+- New app icon (markdown "M↓" mark). macOS uses a baked-in squircle for a
+  native Dock/Finder appearance; Windows and Linux use the full-bleed square.
+- Source 1024×1024 PNGs live in `src-tauri/icons/source/` for reproducible
+  regeneration via `npm run tauri icon`.
+- Web favicon now resolves to `public/favicon.png` instead of the missing
+  `vite.svg` placeholder.
+
 ## [1.0.7] - 2026-04-29
 
 ### Changed
