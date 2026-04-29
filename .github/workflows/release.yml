@@ -104,19 +104,30 @@ jobs:
           RELEASE=$(gh release view "$TAG" --json assets,body --repo "$REPO")
           NOTES=$(echo "$RELEASE" | jq -r '.body // ""')
 
-          # Helper to get signature from .sig file in release assets
+          # Helper: download a .sig file from the release and emit its contents.
+          # Fails the workflow if the signature is missing — better to break the
+          # release than to ship a latest.json with empty signatures (the updater
+          # will then reject every download with a confusing "Download failed").
           get_sig() {
             local sig_file="$1"
-            gh release download "$TAG" --repo "$REPO" --pattern "$sig_file" --dir /tmp 2>/dev/null && cat "/tmp/$sig_file" || echo ""
+            if ! gh release download "$TAG" --repo "$REPO" --pattern "$sig_file" --dir /tmp >/dev/null 2>&1; then
+              echo "ERROR: signature file '$sig_file' not found in release $TAG." >&2
+              echo "Make sure TAURI_SIGNING_PRIVATE_KEY is set in repo secrets and that bundle.targets includes 'app' (mac) and 'nsis' (windows)." >&2
+              exit 1
+            fi
+            cat "/tmp/$sig_file"
           }
 
-          AARCH64_DMG="MarkNotes_${VERSION}_aarch64.dmg"
-          X64_DMG="MarkNotes_${VERSION}_x64.dmg"
-          X64_MSI="MarkNotes_${VERSION}_x64-setup.msi"
+          # Tauri's updater needs platform-specific archive formats, NOT the raw
+          # installer files: .app.tar.gz on macOS, .nsis.zip on Windows. The .dmg
+          # and .exe/.msi are for first-time manual installs only.
+          AARCH64_APP="MarkNotes_${VERSION}_aarch64.app.tar.gz"
+          X64_APP="MarkNotes_${VERSION}_x64.app.tar.gz"
+          X64_NSIS="MarkNotes_${VERSION}_x64-setup.nsis.zip"
 
-          AARCH64_SIG=$(get_sig "${AARCH64_DMG}.sig")
-          X64_DMG_SIG=$(get_sig "${X64_DMG}.sig")
-          X64_MSI_SIG=$(get_sig "${X64_MSI}.sig")
+          AARCH64_SIG=$(get_sig "${AARCH64_APP}.sig")
+          X64_APP_SIG=$(get_sig "${X64_APP}.sig")
+          X64_NSIS_SIG=$(get_sig "${X64_NSIS}.sig")
 
           BASE_URL="https://github.com/${REPO}/releases/download/${TAG}"
 
@@ -128,15 +139,15 @@ jobs:
             "platforms": {
               "darwin-aarch64": {
                 "signature": "${AARCH64_SIG}",
-                "url": "${BASE_URL}/${AARCH64_DMG}"
+                "url": "${BASE_URL}/${AARCH64_APP}"
               },
               "darwin-x86_64": {
-                "signature": "${X64_DMG_SIG}",
-                "url": "${BASE_URL}/${X64_DMG}"
+                "signature": "${X64_APP_SIG}",
+                "url": "${BASE_URL}/${X64_APP}"
               },
               "windows-x86_64": {
-                "signature": "${X64_MSI_SIG}",
-                "url": "${BASE_URL}/${X64_MSI}"
+                "signature": "${X64_NSIS_SIG}",
+                "url": "${BASE_URL}/${X64_NSIS}"
               }
             }
           }

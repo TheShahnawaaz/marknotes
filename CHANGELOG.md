@@ -2,6 +2,20 @@
 
 All notable changes to MarkNotes will be documented here.
 
+## [1.0.6] - 2026-04-29
+
+### Fixed
+- Auto-updater now actually works on macOS and Windows. Previous releases shipped
+  `.dmg` / `.msi` files only, but Tauri's updater needs `.app.tar.gz` (mac) and
+  `.nsis.zip` (windows) plus minisign `.sig` signatures — none of which were being
+  produced. Bundle now emits `app`, `dmg`, and `nsis` targets, and the release
+  workflow fails loudly if signatures are missing instead of writing empty ones
+  into `latest.json`.
+
+### Changed
+- Windows installer is now an NSIS `.exe` setup instead of `.msi` (Tauri's
+  recommended Windows format and the one with proper updater support).
+
 ## [1.0.5] - 2026-04-29
 
 ### Added
