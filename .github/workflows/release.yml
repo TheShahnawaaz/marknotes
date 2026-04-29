@@ -43,11 +43,12 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION="${VERSION#v}"
-          # Update package.json
+          # package.json is the single source of truth for the app version.
+          # tauri.conf.json reads it via "version": "../package.json", and the
+          # frontend reads it through Tauri's getVersion() at runtime.
           node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('package.json')); p.version='${VERSION}'; fs.writeFileSync('package.json', JSON.stringify(p, null, 2)+'\n');"
-          # Update tauri.conf.json
-          node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json')); p.version='${VERSION}'; fs.writeFileSync('src-tauri/tauri.conf.json', JSON.stringify(p, null, 2)+'\n');"
-          # Update Cargo.toml
+          # Cargo.toml version is just Rust crate metadata (not user-facing),
+          # but keep it synced for clean release commits.
           sed -i.bak "s/^version = \".*\"/version = \"${VERSION}\"/" src-tauri/Cargo.toml && rm -f src-tauri/Cargo.toml.bak
 
       - name: Extract release notes from CHANGELOG

@@ -8,11 +8,12 @@ const appWindow = getCurrentWindow();
 
 interface TitlebarProps {
   className?: string;
+  appVersion?: string;
   onToggleSidebar?: () => void;
   onShowShortcuts?: () => void;
 }
 
-export function Titlebar({ className, onToggleSidebar, onShowShortcuts }: TitlebarProps) {
+export function Titlebar({ className, appVersion, onToggleSidebar, onShowShortcuts }: TitlebarProps) {
   const { theme, setTheme, increaseFontSize, decreaseFontSize } = useTheme();
 
   const cycleTheme = () => {
@@ -40,6 +41,11 @@ export function Titlebar({ className, onToggleSidebar, onShowShortcuts }: Titleb
         )}
         <span className="text-sm font-medium text-foreground" data-tauri-drag-region>
           MarkNotes
+          {appVersion && (
+            <span className="ml-2 text-xs font-normal text-muted-foreground">
+              v{appVersion}
+            </span>
+          )}
         </span>
       </div>
 

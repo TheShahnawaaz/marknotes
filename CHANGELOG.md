@@ -2,6 +2,15 @@
 
 All notable changes to MarkNotes will be documented here.
 
+## [1.0.7] - 2026-04-29
+
+### Changed
+- App version now appears in the title bar next to "MarkNotes" instead of the
+  bottom status bar (status bar keeps the live word/character counts).
+- `tauri.conf.json` now inherits its version from `package.json` (`"version":
+  "../package.json"`), so bumping a release only requires touching
+  `package.json` locally — or pushing a tag, which CI handles end-to-end.
+
 ## [1.0.6] - 2026-04-29
 
 ### Fixed

@@ -264,6 +264,7 @@ export default function App() {
       <TooltipProvider delayDuration={300}>
         <div className="flex h-screen w-screen flex-col overflow-hidden bg-background text-foreground">
           <Titlebar
+            appVersion={appVersion}
             onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
             onShowShortcuts={() => setShortcutsOpen(true)}
           />
@@ -306,18 +307,13 @@ export default function App() {
                   </Panel>
                 </PanelGroup>
                 {/* Status bar */}
-                <div className="flex h-6 shrink-0 items-center justify-between border-t border-border bg-background px-4">
+                <div className="flex h-6 shrink-0 items-center justify-end gap-4 border-t border-border bg-background px-4">
                   <span className="text-xs text-muted-foreground">
-                    {appVersion ? `v${appVersion}` : ""}
+                    {content.trim() ? content.trim().split(/\s+/).length : 0} words
                   </span>
-                  <div className="flex gap-4">
-                    <span className="text-xs text-muted-foreground">
-                      {content.trim() ? content.trim().split(/\s+/).length : 0} words
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {content.length} chars
-                    </span>
-                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {content.length} chars
+                  </span>
                 </div>
               </div>
             )}
