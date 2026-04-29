@@ -1,6 +1,12 @@
-# MarkNotes
+<p align="center">
+  <img src="screenshots/logo.png" width="128" alt="MarkNotes" />
+</p>
 
-A fast, native markdown notes app built with Tauri 2. Clean interface, live preview, and blazingly small (~4MB installed).
+<h1 align="center">MarkNotes</h1>
+
+<p align="center">
+  A fast, native markdown notes app built with Tauri 2. Clean interface, live preview, and blazingly small (~4MB installed).
+</p>
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey)
