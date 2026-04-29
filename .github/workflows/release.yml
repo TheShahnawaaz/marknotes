@@ -81,76 +81,8 @@ jobs:
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
-
-  publish:
-    needs: release
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Generate latest.json
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ github.ref_name }}
-          REPO: ${{ github.repository }}
-        run: |
-          VERSION="${TAG#v}"
-          DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-
-          # Fetch release assets info
-          RELEASE=$(gh release view "$TAG" --json assets,body --repo "$REPO")
-          NOTES=$(echo "$RELEASE" | jq -r '.body // ""')
-
-          # Helper: download a .sig file from the release and emit its contents.
-          # Fails the workflow if the signature is missing — better to break the
-          # release than to ship a latest.json with empty signatures (the updater
-          # will then reject every download with a confusing "Download failed").
-          get_sig() {
-            local sig_file="$1"
-            if ! gh release download "$TAG" --repo "$REPO" --pattern "$sig_file" --dir /tmp >/dev/null 2>&1; then
-              echo "ERROR: signature file '$sig_file' not found in release $TAG." >&2
-              echo "Make sure TAURI_SIGNING_PRIVATE_KEY is set in repo secrets and that bundle.targets includes 'app' (mac) and 'nsis' (windows)." >&2
-              exit 1
-            fi
-            cat "/tmp/$sig_file"
-          }
-
-          # Tauri's updater needs platform-specific archive formats, NOT the raw
-          # installer files: .app.tar.gz on macOS, .nsis.zip on Windows. The .dmg
-          # and .exe/.msi are for first-time manual installs only.
-          AARCH64_APP="MarkNotes_${VERSION}_aarch64.app.tar.gz"
-          X64_APP="MarkNotes_${VERSION}_x64.app.tar.gz"
-          X64_NSIS="MarkNotes_${VERSION}_x64-setup.nsis.zip"
-
-          AARCH64_SIG=$(get_sig "${AARCH64_APP}.sig")
-          X64_APP_SIG=$(get_sig "${X64_APP}.sig")
-          X64_NSIS_SIG=$(get_sig "${X64_NSIS}.sig")
-
-          BASE_URL="https://github.com/${REPO}/releases/download/${TAG}"
-
-          cat > latest.json << EOF
-          {
-            "version": "${VERSION}",
-            "notes": $(echo "$NOTES" | jq -Rs .),
-            "pub_date": "${DATE}",
-            "platforms": {
-              "darwin-aarch64": {
-                "signature": "${AARCH64_SIG}",
-                "url": "${BASE_URL}/${AARCH64_APP}"
-              },
-              "darwin-x86_64": {
-                "signature": "${X64_APP_SIG}",
-                "url": "${BASE_URL}/${X64_APP}"
-              },
-              "windows-x86_64": {
-                "signature": "${X64_NSIS_SIG}",
-                "url": "${BASE_URL}/${X64_NSIS}"
-              }
-            }
-          }
-          EOF
-
-          gh release upload "$TAG" latest.json --repo "$REPO" --clobber
+          # tauri-action auto-generates and uploads `latest.json` (with real
+          # signatures and the correct `.app.tar.gz` / `.exe` URLs) when the
+          # signing secrets are present. Don't try to write our own — the asset
+          # filenames are not stable across Tauri versions and the hand-rolled
+          # JSON is what shipped empty signatures in 1.0.0–1.0.5.
