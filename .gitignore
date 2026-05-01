@@ -59,3 +59,6 @@ ehthumbs.db
 
 # Sample notes (for screenshots only)
 sample-notes/
+
+.kiro/
+graphify-out/
