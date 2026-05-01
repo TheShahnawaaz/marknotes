@@ -80,6 +80,24 @@ fn rename_note(old_path: String, new_path: String) -> Result<(), String> {
     fs::rename(&old_path, &new_path).map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+fn write_temp_html(content: String) -> Result<String, String> {
+    let tmp = std::env::temp_dir().join("marknotes_print.html");
+    fs::write(&tmp, content).map_err(|e| e.to_string())?;
+    Ok(tmp.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+fn open_in_browser(path: String) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    std::process::Command::new("open").arg(&path).spawn().map_err(|e| e.to_string())?;
+    #[cfg(target_os = "windows")]
+    std::process::Command::new("cmd").args(["/c", "start", &path]).spawn().map_err(|e| e.to_string())?;
+    #[cfg(target_os = "linux")]
+    std::process::Command::new("xdg-open").arg(&path).spawn().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
@@ -99,6 +117,8 @@ pub fn run() {
             write_note,
             delete_note,
             rename_note,
+            write_temp_html,
+            open_in_browser,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

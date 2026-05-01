@@ -125,3 +125,16 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground));
 }
+
+@media print {
+  body * { visibility: hidden; }
+  #print-preview, #print-preview * { visibility: visible; }
+  #print-preview {
+    position: absolute;
+    inset: 0;
+    padding: 2cm;
+    font-size: 12pt;
+    color: black;
+    background: white;
+  }
+}

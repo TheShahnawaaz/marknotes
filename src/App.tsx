@@ -303,7 +303,7 @@ export default function App() {
                   </Panel>
                   <PanelResizeHandle className="w-px bg-border hover:bg-primary transition-colors" />
                   <Panel defaultSize={50} minSize={30}>
-                    <Preview content={content} />
+                    <Preview content={content} noteTitle={activeNoteId ? path.basename(activeNoteId).replace(/\.md$/, "") : undefined} />
                   </Panel>
                 </PanelGroup>
                 {/* Status bar */}
